@@ -140,10 +140,13 @@ minicom -D /dev/ttyUSB1 -b 115200
 ## Troubleshooting
 
 ### Build Error: XPAR_AXI_CN0561_CLKGEN_BASEADDR not found
-**Solution:** HDL not built yet or xparameters.h not found. Build HDL first.
+**Solution:** FIXED! Updated to use `XPAR_AXI_AD4134_CLKGEN_BASEADDR` instead. See [COMPILATION_FIX.md](COMPILATION_FIX.md) for details.
 
 ### Build Error: CN0561_DMA_BASEADDR undefined
 **Solution:** This is expected and OK! It's commented out for Step 1.
+
+### Warning: Incompatible pointer types for ad713x_spi_reg_read
+**Solution:** FIXED! Changed register variables from `uint32_t` to `uint8_t` to match function signature.
 
 ### Serial: CHIP_TYPE shows 0xFF
 **Solution:** Check SPI connections, ADC power, FPGA programmed correctly
