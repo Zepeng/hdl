@@ -237,10 +237,12 @@ module system_top (
     .spi1_sdo_o (),
     .ad4134_di_sdo (),
     .ad4134_di_sdo_t (),
-    .ad4134_di_sdi (ad4134_din),
+    .ad4134_di_sdi (4'b0),  // DOUT pins disconnected - will be probed by ILA only
     .ad4134_di_cs (),
     .ad4134_di_sclk (ad4134_dclk),
     .ad4134_odr (ad4134_odr),
+    .ad4134_dclk_probe (ad4134_dclk),  // ILA probe for DCLK
+    .ad4134_dout_probe (ad4134_din),   // ILA probe for DOUT[3:0]
     .ad4134_di_three_wire (),
     .otg_vbusoc (otg_vbusoc),
     .spdif (spdif));
