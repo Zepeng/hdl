@@ -17,8 +17,8 @@ source $ad_hdl_dir/library/spi_engine/scripts/spi_engine.tcl
 set data_width    32
 set async_spi_clk 1
 set num_cs        1
-set num_sdi       0
-set num_sdo       0
+set num_sdi       4
+set num_sdo       1
 set sdi_delay     0
 set echo_sclk     0
 
@@ -58,7 +58,8 @@ ad_ip_parameter odr_generator CONFIG.PULSE_1_WIDTH 13
 
 ad_connect odr_generator/ext_clk axi_ad4134_clkgen/clk_0
 ad_connect odr_generator/pwm_1 ad4134_odr
-# Note: pwm_0 trigger removed since no offload mode
+# Note: pwm_0 trigger NOT connected - offload mode disabled for Step 1
+# ad_connect odr_generator/pwm_0 $hier_spi_engine/trigger
 
 ad_connect  axi_ad4134_clkgen/clk_0 $hier_spi_engine/spi_clk
 ad_connect  $sys_cpu_clk axi_ad4134_clkgen/clk

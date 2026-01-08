@@ -14,9 +14,9 @@ This document describes the modifications made to the AD4134 HDL project for Ste
 #### `/projects/ad4134_fmc/common/ad4134_bd.tcl`
 **Changes:**
 - **SPI Engine Configuration:**
-  - Changed `num_sdi` from 4 to 0 (no data input lines)
-  - Changed `num_sdo` from 0 to 0 (no data output needed)
-  - This creates a configuration-only SPI engine without offload capability
+  - Kept `num_sdi` = 4 and `num_sdo` = 1 (SPI engine structure unchanged)
+  - **Key Change:** Disconnected offload trigger (`odr_generator/pwm_0` NOT connected to `spi_engine/trigger`)
+  - This keeps the SPI engine intact but disables automatic offload mode
 
 - **Removed Components:**
   - `axi_ad4134_dma` instance completely removed
@@ -46,9 +46,10 @@ This document describes the modifications made to the AD4134 HDL project for Ste
 
 #### `/projects/ad4134_fmc/zed/system_top.v`
 **Changes:**
-- **DOUT Disconnection:**
-  - `.ad4134_di_sdi (4'b0)` - Physical DOUT pins no longer connected to SPI engine
-  - This leaves the ADC data outputs electrically floating from the SPI engine's perspective
+- **DOUT Connection:**
+  - `.ad4134_di_sdi (ad4134_din)` - Physical DOUT pins connected to SPI engine
+  - Data is available to SPI engine but offload mode is disabled (no trigger)
+  - This allows manual SPI reads if needed for validation
 
 - **ILA Probe Connections:**
   - `.ad4134_dclk_probe (ad4134_dclk)` - DCLK routed to ILA
@@ -66,9 +67,9 @@ Data Clock Path (Still Active):
 ODR Path (Still Active):
   odr_generator/pwm_1 → ODR → ADC
 
-Data Path (DISCONNECTED):
-  ADC DOUT[3:0] → ad4134_din → FLOATING (not connected to SPI engine)
-                           → ILA (for debug only)
+Data Path (Available but not auto-captured):
+  ADC DOUT[3:0] → ad4134_din → SPI engine (offload trigger disconnected)
+                           → ILA (for debug)
 ```
 
 ### 3. What Still Works

@@ -237,7 +237,7 @@ module system_top (
     .spi1_sdo_o (),
     .ad4134_di_sdo (),
     .ad4134_di_sdo_t (),
-    .ad4134_di_sdi (4'b0),  // DOUT pins disconnected - will be probed by ILA only
+    .ad4134_di_sdi (ad4134_din),       // DOUT pins connected to SPI engine (but offload disabled)
     .ad4134_di_cs (),
     .ad4134_di_sclk (ad4134_dclk),
     .ad4134_odr (ad4134_odr),
