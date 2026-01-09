@@ -41,3 +41,8 @@ set_clock_groups -asynchronous \
     -of_objects [get_pins -hier *axi_ad4134_clkgen*/i_mmcm_drp/i_mmcm/CLKOUT0]] \
   -group [get_clocks -include_generated_clocks \
     -of_objects [get_pins -hier *axi_ad4134_clkgen*/i_mmcm_drp/i_mmcm/CLKOUT1]]
+
+# Fallback in case MMCM pin paths are optimized away in the checkpoint.
+set_clock_groups -asynchronous \
+  -group [get_clocks -quiet -regexp {.*mmcm_clk_0_s.*}] \
+  -group [get_clocks -quiet -regexp {.*mmcm_clk_1_s.*}]
