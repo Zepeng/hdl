@@ -125,6 +125,7 @@ module system_top (
   wire    [ 1:0]  iic_mux_sda_i_s;
   wire    [ 1:0]  iic_mux_sda_o_s;
   wire            ii5c_mux_sda_t_s;
+  wire            ad4134_di_sclk_s;
 
   // instantiations
 
@@ -239,7 +240,8 @@ module system_top (
     .ad4134_di_sdo_t (),
     .ad4134_di_sdi (ad4134_din),       // DOUT pins connected to SPI engine (but offload disabled)
     .ad4134_di_cs (),
-    .ad4134_di_sclk (ad4134_dclk),
+    .ad4134_di_sclk (ad4134_di_sclk_s),
+    .ad4134_dclk (ad4134_dclk),
     .ad4134_odr (ad4134_odr),
     .ad4134_dclk_probe (ad4134_dclk),  // ILA probe for DCLK
     .ad4134_dout_probe (ad4134_din),   // ILA probe for DOUT[3:0]

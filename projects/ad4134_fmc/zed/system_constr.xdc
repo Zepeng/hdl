@@ -34,3 +34,10 @@ set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS25} [get_ports ad4134_gpio7
 set_property -dict {PACKAGE_PIN L21 IOSTANDARD LVCMOS25} [get_ports ad4134_pinbspi]       ; ## FMC_LPC_LA06_P
 set_property -dict {PACKAGE_PIN K19 IOSTANDARD LVCMOS25} [get_ports ad4134_dclkio]        ; ## FMC_LPC_LA14_P
 set_property -dict {PACKAGE_PIN K20 IOSTANDARD LVCMOS25} [get_ports ad4134_dclk_mode]     ; ## FMC_LPC_LA14_N
+
+# ILA probes DCLK (CLKOUT1) while clocked by CLKOUT0; treat as async CDC
+set_clock_groups -asynchronous \
+  -group [get_clocks -include_generated_clocks \
+    -of_objects [get_pins -hier *axi_ad4134_clkgen*/i_mmcm_drp/i_mmcm/CLKOUT0]] \
+  -group [get_clocks -include_generated_clocks \
+    -of_objects [get_pins -hier *axi_ad4134_clkgen*/i_mmcm_drp/i_mmcm/CLKOUT1]]

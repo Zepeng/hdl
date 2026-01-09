@@ -5,6 +5,7 @@
 
 create_bd_intf_port -mode Master -vlnv analog.com:interface:spi_engine_rtl:1.0 ad4134_di
 create_bd_port -dir O ad4134_odr
+create_bd_port -dir O ad4134_dclk
 
 # Create ports for ILA probing
 create_bd_port -dir I ad4134_dclk_probe
@@ -29,9 +30,11 @@ spi_engine_create $hier_spi_engine $data_width $async_spi_clk $num_cs $num_sdi $
 # clkgen
 
 ad_ip_instance axi_clkgen axi_ad4134_clkgen
-ad_ip_parameter axi_ad4134_clkgen CONFIG.VCO_DIV 5
-ad_ip_parameter axi_ad4134_clkgen CONFIG.VCO_MUL 48
+ad_ip_parameter axi_ad4134_clkgen CONFIG.ENABLE_CLKOUT1 true
+ad_ip_parameter axi_ad4134_clkgen CONFIG.VCO_DIV 1
+ad_ip_parameter axi_ad4134_clkgen CONFIG.VCO_MUL 10
 ad_ip_parameter axi_ad4134_clkgen CONFIG.CLK0_DIV 10
+ad_ip_parameter axi_ad4134_clkgen CONFIG.CLK1_DIV 20
 
 # DMA removed - we will use custom data capture module in later steps
 # For now, DOUT pins will be monitored via ILA only
@@ -56,11 +59,12 @@ ad_ip_parameter odr_generator CONFIG.PULSE_0_OFFSET 3
 ad_ip_parameter odr_generator CONFIG.PULSE_1_PERIOD 85
 ad_ip_parameter odr_generator CONFIG.PULSE_1_WIDTH 13
 
-ad_connect odr_generator/ext_clk axi_ad4134_clkgen/clk_0
+ad_connect odr_generator/ext_clk axi_ad4134_clkgen/clk_1
 ad_connect odr_generator/pwm_1 ad4134_odr
 # Note: pwm_0 trigger NOT connected - offload mode disabled for Step 1
 # ad_connect odr_generator/pwm_0 $hier_spi_engine/trigger
 
+ad_connect  axi_ad4134_clkgen/clk_1 ad4134_dclk
 ad_connect  axi_ad4134_clkgen/clk_0 $hier_spi_engine/spi_clk
 ad_connect  $sys_cpu_clk axi_ad4134_clkgen/clk
 ad_connect  $sys_cpu_clk $hier_spi_engine/clk
