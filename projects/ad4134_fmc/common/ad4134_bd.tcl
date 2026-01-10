@@ -36,8 +36,17 @@ ad_ip_parameter axi_ad4134_clkgen CONFIG.VCO_MUL 10
 ad_ip_parameter axi_ad4134_clkgen CONFIG.CLK0_DIV 10
 ad_ip_parameter axi_ad4134_clkgen CONFIG.CLK1_DIV 20
 
-# DMA removed - we will use custom data capture module in later steps
-# For now, DOUT pins will be monitored via ILA only
+# DMA for custom AXI-stream capture
+ad_ip_instance axi_dmac axi_ad4134_dma
+ad_ip_parameter axi_ad4134_dma CONFIG.DMA_TYPE_SRC 1
+ad_ip_parameter axi_ad4134_dma CONFIG.DMA_TYPE_DEST 0
+ad_ip_parameter axi_ad4134_dma CONFIG.CYCLIC 0
+ad_ip_parameter axi_ad4134_dma CONFIG.SYNC_TRANSFER_START 0
+ad_ip_parameter axi_ad4134_dma CONFIG.DMA_2D_TRANSFER 0
+ad_ip_parameter axi_ad4134_dma CONFIG.DMA_DATA_WIDTH_SRC 128
+ad_ip_parameter axi_ad4134_dma CONFIG.DMA_DATA_WIDTH_DEST 64
+ad_ip_parameter axi_ad4134_dma CONFIG.MAX_BYTES_PER_BURST 128
+ad_ip_parameter axi_ad4134_dma CONFIG.FIFO_SIZE 16
 
 # ILA for debugging - probe DCLK, ODR, and 4 DOUT signals
 ad_ip_instance ila ila_ad4134
@@ -59,16 +68,23 @@ ad_ip_parameter odr_generator CONFIG.PULSE_0_OFFSET 3
 ad_ip_parameter odr_generator CONFIG.PULSE_1_PERIOD 85
 ad_ip_parameter odr_generator CONFIG.PULSE_1_WIDTH 13
 
+# custom capture module (AXI-stream source)
+create_bd_cell -type module -reference ad4134_axis_capture ad4134_capture
+
 ad_connect odr_generator/ext_clk axi_ad4134_clkgen/clk_1
 ad_connect odr_generator/pwm_1 ad4134_odr
 # Note: pwm_0 trigger NOT connected - offload mode disabled for Step 1
 # ad_connect odr_generator/pwm_0 $hier_spi_engine/trigger
 
 ad_connect  axi_ad4134_clkgen/clk_1 ad4134_dclk
+ad_connect  axi_ad4134_clkgen/clk_1 ad4134_capture/clk
 ad_connect  axi_ad4134_clkgen/clk_0 $hier_spi_engine/spi_clk
 ad_connect  $sys_cpu_clk axi_ad4134_clkgen/clk
 ad_connect  $sys_cpu_clk $hier_spi_engine/clk
 ad_connect  sys_cpu_resetn $hier_spi_engine/resetn
+ad_connect  sys_cpu_resetn ad4134_capture/resetn
+ad_connect  odr_generator/pwm_1 ad4134_capture/odr
+ad_connect  ad4134_dout_probe ad4134_capture/din
 
 ad_connect  $hier_spi_engine/m_spi ad4134_di
 
@@ -78,18 +94,34 @@ ad_connect  ad4134_dclk_probe ila_ad4134/probe0
 ad_connect  ad4134_odr ila_ad4134/probe1
 ad_connect  ad4134_dout_probe ila_ad4134/probe2
 
+# AXI-stream capture to DMA
+ad_connect  axi_ad4134_clkgen/clk_1 axi_ad4134_dma/s_axis_aclk
+ad_connect  ad4134_capture/m_axis_tvalid axi_ad4134_dma/s_axis_valid
+ad_connect  ad4134_capture/m_axis_tdata axi_ad4134_dma/s_axis_data
+ad_connect  axi_ad4134_dma/s_axis_ready ad4134_capture/m_axis_tready
+ad_connect  ad4134_capture/m_axis_tkeep axi_ad4134_dma/s_axis_keep
+ad_connect  ad4134_capture/m_axis_tstrb axi_ad4134_dma/s_axis_strb
+ad_connect  ad4134_capture/m_axis_tlast axi_ad4134_dma/s_axis_last
+ad_connect  ad4134_capture/m_axis_tuser axi_ad4134_dma/s_axis_user
+ad_connect  ad4134_capture/m_axis_tid axi_ad4134_dma/s_axis_id
+ad_connect  ad4134_capture/m_axis_tdest axi_ad4134_dma/s_axis_dest
+ad_connect  $sys_cpu_clk axi_ad4134_dma/s_axi_aclk
+ad_connect  sys_cpu_resetn axi_ad4134_dma/s_axi_aresetn
+ad_connect  sys_cpu_resetn axi_ad4134_dma/m_dest_axi_aresetn
+ad_connect  GND axi_ad4134_dma/sync
+
 # AXI address definitions
 
 ad_cpu_interconnect 0x44a00000 $hier_spi_engine/${hier_spi_engine}_axi_regmap
-# 0x44a30000 axi_ad4134_dma - REMOVED (no DMA in this configuration)
+ad_cpu_interconnect 0x44a30000 axi_ad4134_dma
 ad_cpu_interconnect 0x44b00000 odr_generator
 ad_cpu_interconnect 0x44b10000 axi_ad4134_clkgen
 
 # interrupts
 
-# ad_cpu_interrupt "ps-13" "mb-13" axi_ad4134_dma/irq - REMOVED (no DMA)
+ad_cpu_interrupt "ps-13" "mb-13" axi_ad4134_dma/irq
 ad_cpu_interrupt "ps-12" "mb-12" $hier_spi_engine/irq
 
-# memory interconnects - REMOVED (no DMA to memory)
-# ad_mem_hp1_interconnect $sys_cpu_clk sys_ps7/S_AXI_HP1
-# ad_mem_hp1_interconnect $sys_cpu_clk axi_ad4134_dma/m_dest_axi
+# memory interconnects
+ad_mem_hp1_interconnect $sys_cpu_clk sys_ps7/S_AXI_HP1
+ad_mem_hp1_interconnect $sys_cpu_clk axi_ad4134_dma/m_dest_axi
