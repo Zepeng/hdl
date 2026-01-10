@@ -113,7 +113,9 @@ ad_connect  ad4134_capture/m_axis_tdest axi_ad4134_dma/s_axis_dest
 ad_connect  $sys_cpu_clk axi_ad4134_dma/s_axi_aclk
 ad_connect  sys_cpu_resetn axi_ad4134_dma/s_axi_aresetn
 ad_connect  sys_cpu_resetn axi_ad4134_dma/m_dest_axi_aresetn
-ad_connect  GND axi_ad4134_dma/sync
+if {[llength [get_bd_pins -quiet axi_ad4134_dma/sync]] > 0} {
+  ad_connect  GND axi_ad4134_dma/sync
+}
 
 # AXI address definitions
 
