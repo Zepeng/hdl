@@ -11,9 +11,19 @@
 - ✅ ILA signal observation
 
 **What doesn't work (intentionally):**
-- ❌ Data capture to memory
-- ❌ DMA streaming
-- ❌ `spi_engine_offload_*` functions
+- ❌ `spi_engine_offload_*` trigger/capture path (offload remains disabled)
+- ❌ IIO streaming (custom capture only)
+
+## Current Status (Custom Capture + DMA)
+
+**What changed since the original Step 1:**
+- ✅ Added a custom AXI-stream capture block (`common/ad4134_axis_capture.v`) that shifts DOUT[3:0] on DCLK after each ODR pulse and emits 128-bit samples.
+- ✅ Re-enabled DMA (`axi_ad4134_dma`) to move captured samples into DDR.
+- ✅ DCLK is sourced from `axi_ad4134_clkgen/clk_1` (50 MHz), ODR from `odr_generator/pwm_1`.
+- ✅ no-OS uses DMAC (no offload) and performs additional AD4134 slave-mode register checks.
+
+**Current problem:**
+- The block design still shows an AXI ILA with `probe2[1:0]` even though the TCL now instantiates a native ILA with `C_PROBE2_WIDTH=4`. This usually means the BD/bit/ltx was not regenerated after the TCL change.
 
 ## Quick Answer to Your Question
 
@@ -30,8 +40,11 @@
 ## File Guide
 
 ### HDL Files (Already Modified)
-1. **`common/ad4134_bd.tcl`** - Block design with DMA removed, ILA added
+1. **`common/ad4134_bd.tcl`** - Block design with custom capture, DMA, and native ILA
 2. **`zed/system_top.v`** - Top level with ILA probe connections
+3. **`common/ad4134_axis_capture.v`** - Custom AXI-stream DOUT capture module
+4. **`zed/system_project.tcl`** - Adds capture RTL to the project
+5. **`zed/system_constr.xdc`** - Async clock group constraints for ILA clocks
 
 ### Documentation Files (New)
 1. **`STEP1_SUMMARY.md`** - Technical overview of changes
@@ -84,8 +97,8 @@ Status:       0x01 [READY] ✓
 ```
 
 **ILA should show:**
-- DCLK: Toggling at ~9.6 MHz ✓
-- ODR: Pulses every 85 DCLK cycles ✓
+- DCLK: Toggling at 50 MHz (clk_1) ✓
+- ODR: Pulses at configured rate ✓
 - DOUT[3:0]: Active serial data ✓
 
 ## Understanding the System
@@ -109,7 +122,7 @@ Status:       0x01 [READY] ✓
 │  (This works in Step 1)                                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│  CLK Gen ──9.6MHz──> DCLK ──> ADC (clock input) ✓       │
+│  CLK Gen ──50MHz──> DCLK ──> ADC (clock input) ✓       │
 │                                                          │
 │  ODR Gen ──pulses──> ODR ──> ADC (sample timing) ✓      │
 │                                                          │
@@ -117,15 +130,14 @@ Status:       0x01 [READY] ✓
 
 ┌─────────────────────────────────────────────────────────┐
 │                     Data Output Path                     │
-│  (ADC outputs, FPGA observes but doesn't capture)       │
+│  (Current build: custom capture + DMA)                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│  ADC ──DOUT[3:0]──> FPGA ──> SPI Engine (idle)          │
+│  ADC ──DOUT[3:0]──> Capture ──AXI Stream──> DMA ✓       │
 │              │                      │                    │
 │              └──────> ILA ──> You can observe ✓         │
 │                                                          │
-│  SPI Engine Offload: Present but NO TRIGGER ✗           │
-│  DMA: Not present ✗                                      │
+│  SPI Engine Offload: Disabled ✗                         │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -157,16 +169,19 @@ In Step 1, we **intentionally disconnected the trigger** to prevent automatic ca
 | Address | Component | Step 1 Status | Step 3 Status |
 |---------|-----------|---------------|---------------|
 | 0x44A00000 | SPI Engine | ✅ Available | ✅ Available |
-| 0x44A30000 | DMA | ❌ REMOVED | ✅ Will restore |
+| 0x44A30000 | DMA | ✅ Present (custom capture) | ✅ Present |
 | 0x44B00000 | ODR Generator | ✅ Available | ✅ Available |
 | 0x44B10000 | Clock Gen | ✅ Available | ✅ Available |
 
-**Important:** Do NOT access 0x44A30000 in Step 1 - it will cause a bus error!
+**Important:** DMA is now present; no-OS uses it via `axi_dmac_*`.
 
 ## Typical Issues & Solutions
 
 ### Issue: Build fails with ILA errors
 **Solution:** Ensure you have Xilinx ILA IP core licensed/available
+
+### Issue: ILA in BD still shows probe2[1:0] or AXI ILA
+**Solution:** Regenerate the block design from TCL, re-synthesize/implement, and use the fresh `.ltx` that matches the bitstream.
 
 ### Issue: "CHIP_TYPE returns 0xFF"
 **Solution:**
