@@ -51,6 +51,7 @@ ad_ip_parameter axi_ad4134_dma CONFIG.FIFO_SIZE 16
 # ILA for debugging - probe DCLK, ODR, and 4 DOUT signals
 ad_ip_instance ila ila_ad4134
 ad_ip_parameter ila_ad4134 CONFIG.C_NUM_OF_PROBES 3
+ad_ip_parameter ila_ad4134 CONFIG.C_MONITOR_TYPE Native
 ad_ip_parameter ila_ad4134 CONFIG.C_PROBE0_WIDTH 1
 ad_ip_parameter ila_ad4134 CONFIG.C_PROBE1_WIDTH 1
 ad_ip_parameter ila_ad4134 CONFIG.C_PROBE2_WIDTH 4
