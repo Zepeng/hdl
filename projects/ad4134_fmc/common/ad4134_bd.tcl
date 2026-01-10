@@ -50,14 +50,15 @@ ad_ip_parameter axi_ad4134_dma CONFIG.FIFO_SIZE 16
 
 # ILA for debugging - probe DCLK, ODR, and 4 DOUT signals
 ad_ip_instance ila ila_ad4134
-ad_ip_parameter ila_ad4134 CONFIG.C_NUM_OF_PROBES 3
 ad_ip_parameter ila_ad4134 CONFIG.C_MONITOR_TYPE Native
+ad_ip_parameter ila_ad4134 CONFIG.C_NUM_OF_PROBES 3
 ad_ip_parameter ila_ad4134 CONFIG.C_PROBE0_WIDTH 1
 ad_ip_parameter ila_ad4134 CONFIG.C_PROBE1_WIDTH 1
 ad_ip_parameter ila_ad4134 CONFIG.C_PROBE2_WIDTH 4
 ad_ip_parameter ila_ad4134 CONFIG.C_DATA_DEPTH 4096
 ad_ip_parameter ila_ad4134 CONFIG.C_EN_STRG_QUAL 1
 ad_ip_parameter ila_ad4134 CONFIG.ALL_PROBE_SAME_MU true
+ad_ip_parameter ila_ad4134 CONFIG.C_TRIGIN_EN false
 
 # odr generator
 
@@ -96,9 +97,9 @@ ad_connect  $hier_spi_engine/m_spi ad4134_di
 
 # ILA connections - probe DCLK (probe0), ODR (probe1), and DOUT[3:0] (probe2)
 ad_connect  axi_ad4134_clkgen/clk_0 ila_ad4134/clk
-connect_bd_net [get_bd_ports ad4134_dclk_probe] [get_bd_pins ila_ad4134/probe0]
-connect_bd_net [get_bd_ports ad4134_odr] [get_bd_pins ila_ad4134/probe1]
-connect_bd_net [get_bd_ports ad4134_dout_probe] [get_bd_pins ila_ad4134/probe2]
+ad_connect  ad4134_dclk_probe ila_ad4134/probe0
+ad_connect  ad4134_odr ila_ad4134/probe1
+ad_connect  ad4134_dout_probe ila_ad4134/probe2
 
 # AXI-stream capture to DMA
 ad_connect  axi_ad4134_clkgen/clk_1 axi_ad4134_dma/s_axis_aclk
