@@ -68,6 +68,11 @@ ad_ip_parameter odr_generator CONFIG.PULSE_0_OFFSET 3
 ad_ip_parameter odr_generator CONFIG.PULSE_1_PERIOD 85
 ad_ip_parameter odr_generator CONFIG.PULSE_1_WIDTH 13
 
+# Ensure custom capture module is in the project sources before BD creation.
+if {[llength [get_files -quiet *ad4134_axis_capture.v]] == 0} {
+  add_files -norecurse "$ad_hdl_dir/projects/ad4134_fmc/common/ad4134_axis_capture.v"
+}
+
 # custom capture module (AXI-stream source)
 create_bd_cell -type module -reference ad4134_axis_capture ad4134_capture
 

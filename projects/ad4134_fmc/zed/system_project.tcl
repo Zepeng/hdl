@@ -11,7 +11,7 @@ adi_project ad4134_fmc_zed
 
 adi_project_files ad4134_fmc_zed [list \
     "$ad_hdl_dir/library/common/ad_iobuf.v" \
-    "../common/ad4134_axis_capture.v" \
+    "$ad_hdl_dir/projects/ad4134_fmc/common/ad4134_axis_capture.v" \
     "system_top.v" \
     "system_constr.xdc" \
     "$ad_hdl_dir/projects/common/zed/zed_system_constr.xdc"]
